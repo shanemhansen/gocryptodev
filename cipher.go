@@ -12,15 +12,12 @@ type Cipher struct {
 }
 
 //Create a new cipher See constants for possible cipher types
-//CRYPTO_AES_ECB is probably what you want here. CBC, CTR
-//behaviour can be added by passing this to crypto/cipher to
-//create a StreamReader or StreamWriter
-func NewCipher(ciphername CipherType, key []byte) (*Cipher, error) {
+func NewCipher(ciphername CipherType, key []byte, iv []byte) (*Cipher, error) {
     handle, err := GetHandle()
     if err != nil {
         return nil, err
     }
-    session := &SessionOp{Cipher: ciphername}
+    session := &SessionOp{Cipher: CRYPTO_AES_CBC}
     session.Key = unsafe.Pointer(&key[0])
     session.Keylen = uint32(len(key))
     err = ioctl(handle, CIOCGSESSION, unsafe.Pointer(session))
@@ -29,6 +26,13 @@ func NewCipher(ciphername CipherType, key []byte) (*Cipher, error) {
     }
     cipher := &Cipher{File: handle, Session: session}
     cipher.CryptOp = &CryptOp{Session: session.Id}
+    cipher.CryptOp.Flags = COP_FLAG_WRITE_IV
+    if iv != nil {
+        //Make a copy so the caller can reuse for decrypting
+        new_iv := make([]byte, len(iv))
+        copy(new_iv, iv)
+        cipher.CryptOp.Iv = unsafe.Pointer(&new_iv[0])
+    }
     return cipher, nil
 }
 
@@ -37,17 +41,29 @@ func (self *Cipher) BlockSize() int {
     return BlockSizes[self.Session.Cipher]
 }
 
-//Encrypt the data in src, placing the result in dst
-//I believe for now src must be a multiple of the blocksize
-//You're on your own for padding.
+//The go convention for Encrypt is that it works
+//one BlockSize at a time. Please use the BlockMode
+//interface for performance as it can encrypt multiple blocks
 func (self *Cipher) Encrypt(dst, src []byte) {
+    self.encrypt(dst, src, false)
+}
+
+//Encrypt several blocks. Again this doesn't handle
+//padding. So len(dst) % self.BlockSize must equal 0
+func (self *Cipher) CryptBlocks(dst, src []byte) {
+    self.encrypt(dst, src, true)
+}
+func (self *Cipher) encrypt(dst, src []byte, slurp bool) {
     op := self.CryptOp
     op.Operation = COP_ENCRYPT
     //For now, support ECB because everything else
     //can be layered on top in go.
-    op.Iv = nil
     op.Src = unsafe.Pointer(&src[0])
-    op.Length = 16
+    if slurp {
+        op.Length = uint32(len(src))
+    } else {
+        op.Length = uint32(self.BlockSize())
+    }
     op.Dst = unsafe.Pointer(&dst[0])
     err := ioctl(self.File, CIOCCRYPT, unsafe.Pointer(op))
     if err != nil {
@@ -62,7 +78,6 @@ func (self *Cipher) Decrypt(dst, src []byte) {
     op.Operation = COP_DECRYPT
     //For now, support ECB because everything else
     //can be layered on top in go.
-    op.Iv = nil
     op.Src = unsafe.Pointer(&src[0])
     op.Length = uint32(len(src))
     op.Dst = unsafe.Pointer(&dst[0])

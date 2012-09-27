@@ -7,36 +7,37 @@ const (
 
 type DigestType uint32
 type CipherType uint32
+type StreamType uint32
 
 //Various digests and ciphers supported by cryptodev. Not all of these
 //are usable (such as those requiring iv's. To get hmac or cbc please pass
 //a Hash or Cipher to crypto/hmac or crypto/cipher
 
 const (
-    CRYPTO_DES_CBC         = iota
-    CRYPTO_3DES_CBC        = iota
-    CRYPTO_BLF_CBC         = iota
-    CRYPTO_CAST_CBC        = iota
-    CRYPTO_SKIPJACK_CBC    = iota
-    CRYPTO_MD5_HMAC        = iota
-    CRYPTO_SHA1_HMAC       = iota
-    CRYPTO_RIPEMD160_HMAC  = iota
-    CRYPTO_MD5_KPDK        = iota
-    CRYPTO_SHA1_KPDK       = iota
-    CRYPTO_RIJNDAEL128_CBC = iota
+    CRYPTO_DES_CBC         = 1
+    CRYPTO_3DES_CBC        = 2
+    CRYPTO_BLF_CBC         = 3
+    CRYPTO_CAST_CBC        = 4
+    CRYPTO_SKIPJACK_CBC    = 5
+    CRYPTO_MD5_HMAC        = 6
+    CRYPTO_SHA1_HMAC       = 7
+    CRYPTO_RIPEMD160_HMAC  = 8
+    CRYPTO_MD5_KPDK        = 9
+    CRYPTO_SHA1_KPDK       = 10
+    CRYPTO_RIJNDAEL128_CBC = 11
     CRYPTO_AES_CBC         = CRYPTO_RIJNDAEL128_CBC
-    CRYPTO_ARC4            = iota
-    CRYPTO_MD5             = iota
-    CRYPTO_SHA1            = iota
-    CRYPTO_DEFLATE_COMP    = iota
-    CRYPTO_NULL            = iota
-    CRYPTO_LZS_COMP        = iota
-    CRYPTO_SHA2_256_HMAC   = iota
-    CRYPTO_SHA2_384_HMAC   = iota
-    CRYPTO_SHA2_512_HMAC   = iota
-    CRYPTO_AES_CTR         = iota
-    CRYPTO_AES_XTS         = iota
-    CRYPTO_AES_ECB         = iota
+    CRYPTO_ARC4            = 12
+    CRYPTO_MD5             = 13
+    CRYPTO_SHA1            = 14
+    CRYPTO_DEFLATE_COMP    = 15
+    CRYPTO_NULL            = 16
+    CRYPTO_LZS_COMP        = 17
+    CRYPTO_SHA2_256_HMAC   = 18
+    CRYPTO_SHA2_384_HMAC   = 19
+    CRYPTO_SHA2_512_HMAC   = 20
+    CRYPTO_AES_CTR         = 21
+    CRYPTO_AES_XTS         = 22
+    CRYPTO_AES_ECB         = 23
     CRYPTO_AES_GCM         = 50
     CRYPTO_CAMELLIA_CBC    = 101
     CRYPTO_RIPEMD160       = 102
@@ -87,4 +88,5 @@ var BlockSizes = []int{CRYPTO_SHA1: 20,
     CRYPTO_SHA2_512:  64,
     CRYPTO_MD5:       16,
     CRYPTO_AES_ECB:   AES_BLOCK_LEN,
-    CRYPTO_RIPEMD160: 20}
+    CRYPTO_RIPEMD160: 20,
+    CRYPTO_AES_CBC:   AES_BLOCK_LEN}

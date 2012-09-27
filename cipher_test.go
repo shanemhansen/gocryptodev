@@ -15,7 +15,7 @@ func TestCipher(t *testing.T) {
     var aes cipher.Block
     var err error
     for cipher_id, expected := range cipher_results {
-        aes, err = NewCipher(cipher_id, key)
+        aes, err = NewCipher(cipher_id, key, nil)
         if err != nil {
             t.Fatal(err)
         }
@@ -26,6 +26,7 @@ func TestCipher(t *testing.T) {
         if !strings.EqualFold(expected, fmt.Sprintf("%x", ciphertext)) {
             t.Fatal("couldn't encrypt")
         }
+        aes, err = NewCipher(cipher_id, key, nil)
         aes.Decrypt(deciphertext, ciphertext)
         if !bytes.Equal(cleartext, deciphertext) {
             t.Fatal("couldn't decrypt %s %s", cleartext, deciphertext)
@@ -33,5 +34,26 @@ func TestCipher(t *testing.T) {
         if err != nil {
             t.Fatal(err)
         }
+    }
+}
+func TestStreamCipher(t *testing.T) {
+    var aes cipher.Block
+    var err error
+    iv := []byte{0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+    aes, err = NewCipher(CRYPTO_AES_CBC, key, iv)
+    if err != nil {
+        t.Fatal(err)
+    }
+    blocksize := aes.BlockSize()
+    ciphertext := make([]byte, blocksize)
+    aes.Encrypt(ciphertext, cleartext)
+    deciphertext := make([]byte, blocksize)
+    aes, err = NewCipher(CRYPTO_AES_CBC, key, iv)
+    aes.Decrypt(deciphertext, ciphertext)
+    if !bytes.Equal(cleartext, deciphertext) {
+        t.Fatal("couldn't decrypt %s %s", cleartext, deciphertext)
+    }
+    if err != nil {
+        t.Fatal(err)
     }
 }
